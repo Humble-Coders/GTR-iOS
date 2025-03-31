@@ -27,6 +27,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
@@ -47,6 +48,7 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.rememberScaffoldState
@@ -79,6 +81,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.example.iosfirebasehope.navigation.components.CustomerDetailsScreenComponent
 import org.example.iosfirebasehope.navigation.events.CustomerDetailsScreenEvent
+import androidx.compose.ui.platform.LocalFocusManager
 
 
 @Composable
@@ -112,6 +115,7 @@ fun CustomerDetailsScreenUI(
     var searchQuery by remember { mutableStateOf("") }
     var isUploading = remember { mutableStateOf(false) }
     var isCashDialogActive by remember { mutableStateOf(false) }
+    var isCreditDialogActive by remember { mutableStateOf(false) }
     var selectedGases by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
 
@@ -159,7 +163,7 @@ fun CustomerDetailsScreenUI(
                 lpgIssued = lpgIssuedDoc.get("Quantities") as? Map<String, String>
             } else {
                 coroutineScope.launch {
-                  //  scaffoldState.snackbarHostState.showSnackbar("No LPG Issued found.")
+                    //  scaffoldState.snackbarHostState.showSnackbar("No LPG Issued found.")
                 }
             }
         } catch (e: Exception) {
@@ -227,18 +231,38 @@ fun CustomerDetailsScreenUI(
                 )
             }
 
-            Button(
-                onClick = { isCashDialogActive = true },
+            // Row for Cash Transaction and + Credit buttons
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 16.dp, end = 16.dp),
-                colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2f80eb))
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = "Cash Transaction",
-                    color = Color.White,
-                    fontSize = 16.sp
-                )
+                // Cash Transaction Button
+                Button(
+                    onClick = { isCashDialogActive = true },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2f80eb))
+                ) {
+                    Text(
+                        text = "+ Cash",
+                        color = Color.White,
+                        fontSize = 16.sp
+                    )
+                }
+
+                // + Credit Button
+                Button(
+                    onClick = { isCreditDialogActive = true },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2f80eb))
+                ) {
+                    Text(
+                        text = "+ Credit",
+                        color = Color.White,
+                        fontSize = 16.sp
+                    )
+                }
             }
 
             if (isCashDialogActive) {
@@ -263,7 +287,35 @@ fun CustomerDetailsScreenUI(
                             }
                         }
                     },
-                    coroutineScope = coroutineScope
+                    coroutineScope = coroutineScope,
+                    isCreditTransaction = false
+                )
+            }
+
+            if (isCreditDialogActive) {
+                CashTransactionDialog(
+                    onDismiss = { isCreditDialogActive = false },
+                    isUploading = isUploading,
+                    customerName = customerName,
+                    db = db,
+                    onUpdateSuccess = {
+                        // Refresh the customer details
+                        coroutineScope.launch {
+                            val customerDoc = db.collection("Customers")
+                                .document("Details")
+                                .collection("Names")
+                                .document(customerName)
+                                .get()
+
+                            if (customerDoc.exists) {
+                                customerDetails = customerDoc.get("Details") as? Map<String, String>
+                            } else {
+                                scaffoldState.snackbarHostState.showSnackbar("Customer details not found.")
+                            }
+                        }
+                    },
+                    coroutineScope = coroutineScope,
+                    isCreditTransaction = true
                 )
             }
 
@@ -377,7 +429,8 @@ fun CustomerDetailsScreenUI(
                     unfocusedBorderColor = Color.LightGray,
                     backgroundColor = Color.White
                 ),
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
             )
 
             // Cylinder groups display
@@ -798,7 +851,8 @@ fun CashTransactionDialog(
     customerName: String,
     db: FirebaseFirestore,
     onUpdateSuccess: () -> Unit, // Callback to notify the parent about successful update
-    coroutineScope: CoroutineScope // Pass the coroutine scope from the parent
+    coroutineScope: CoroutineScope, // Pass the coroutine scope from the parent
+    isCreditTransaction: Boolean // Flag to determine if this is a credit transaction
 ) {
     var cashIn by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -835,24 +889,45 @@ fun CashTransactionDialog(
                     ) {
                         // Title
                         Text(
-                            text = "Make a Cash Transaction",
+                            text = if (isCreditTransaction) "Add Credit" else "Make a Cash Transaction",
                             fontWeight = FontWeight.Bold,
                             fontSize = 20.sp,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
 
                         // Cash In Field
+                        val focusManager = LocalFocusManager.current
+
                         OutlinedTextField(
                             value = cashIn,
                             onValueChange = { cashIn = it },
-                            label = { Text("Cash In") },
+                            label = { Text(if (isCreditTransaction) "Add Credit" else "Cash In") },
                             modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            visualTransformation = VisualTransformation.None,
                             keyboardOptions = KeyboardOptions.Default.copy(
-                                keyboardType = KeyboardType.Number,
+                                keyboardType = KeyboardType.Decimal,
                                 imeAction = ImeAction.Done
-                            )
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    focusManager.clearFocus() // This clears focus when Done is pressed
+                                }
+                            ),
+                            trailingIcon = {
+                                if (cashIn.isNotEmpty()) {
+                                    IconButton(onClick = {
+                                        focusManager.clearFocus() // This will close the keyboard
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Done",
+                                            tint = Color(0xFF2f80eb)
+                                        )
+                                    }
+                                }
+                            }
                         )
-
                         // Error Message
                         if (errorMessage != null) {
                             Text(
@@ -921,42 +996,42 @@ fun CashTransactionDialog(
 
                                             val transactionDetailsRef = transactionsRef.collection("Transaction Details")
 
-                                            // Push Cash document
-                                            transactionDetailsRef.document("Cash").set(mapOf("Amount" to cashInAmount))
-
-                                            // Push Credit document
-                                            transactionDetailsRef.document("Credit").set(mapOf("Amount" to ""))
+                                            if (isCreditTransaction) {
+                                                // For Credit transaction, put amount in Credit document
+                                                transactionDetailsRef.document("Cash").set(mapOf("Amount" to ""))
+                                                transactionDetailsRef.document("Credit").set(mapOf("Amount" to cashInAmount))
+                                            } else {
+                                                // For Cash transaction, put amount in Cash document
+                                                transactionDetailsRef.document("Cash").set(mapOf("Amount" to cashInAmount))
+                                                transactionDetailsRef.document("Credit").set(mapOf("Amount" to ""))
+                                            }
 
                                             transactionDetailsRef.document("Cylinders Issued").set(emptyMap<String, String>())
-
-
-                                            // Push Cylinders Returned document (empty for now)
                                             transactionDetailsRef.document("Cylinders Returned").set(mapOf("CylindersReturned" to emptyList<String>()))
-
                                             transactionDetailsRef.document("LPG Issued").set(mapOf("LPGIssued" to ""))
-
                                             transactionDetailsRef.document("Inventory Issued").set(mapOf("InventoryIssued" to ""))
-
-                                            // Push the new credit value
 
                                             if (document.exists) {
                                                 val details = document.get("Details") as? Map<String, String>
                                                 val currentCredit = details?.get("Credit")?.toDoubleOrNull() ?: 0.0
                                                 val updatedCredit: Double
 
-                                                if (currentCredit < cashInAmount) {
-                                                    updatedCredit = 0.0
-                                                }
-                                                else{
-                                                    updatedCredit = currentCredit - cashInAmount
+                                                if (isCreditTransaction) {
+                                                    // Add credit for credit transaction
+                                                    updatedCredit = currentCredit + cashInAmount
+                                                } else {
+                                                    // Subtract credit for cash transaction (payment)
+                                                    if (currentCredit < cashInAmount) {
+                                                        updatedCredit = 0.0
+                                                    } else {
+                                                        updatedCredit = currentCredit - cashInAmount
+                                                    }
                                                 }
 
                                                 // Update the credit value
-
                                                 val updatedDetails = details?.toMutableMap()?.apply {
                                                     put("Credit", updatedCredit.toString())
                                                 }
-
 
                                                 // Update Firestore
                                                 db.collection("Customers")

@@ -140,7 +140,7 @@ fun InventoryVendorsScreenUI(
                         focusedBorderColor = Color(0xFF2f80eb),
                         unfocusedBorderColor = Color(0xFF2f80eb)
                     ),
-                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search)
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
                 )
             }
 

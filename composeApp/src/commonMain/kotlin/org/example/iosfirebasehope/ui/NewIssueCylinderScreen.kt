@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
@@ -38,6 +39,7 @@ import androidx.compose.material.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
@@ -64,7 +66,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -1626,6 +1631,7 @@ fun CheckoutDialog(
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
+                    val focusManager = LocalFocusManager.current
 
                     // Delivery input - Moved to the top of the payment fields
                     OutlinedTextField(
@@ -1641,7 +1647,20 @@ fun CheckoutDialog(
                         label = { Text("Delivery Charge") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !isLoading
+                        enabled = !isLoading,
+                        trailingIcon = {
+                            if (deliveryStr.isNotEmpty()) {
+                                IconButton(onClick = {
+                                    focusManager.clearFocus() // This will close the keyboard
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Done",
+                                        tint = Color(0xFF2f80eb)
+                                    )
+                                }
+                            }
+                        }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -1668,7 +1687,20 @@ fun CheckoutDialog(
                         label = { Text("Cash$") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !isLoading
+                        enabled = !isLoading,
+                        trailingIcon = {
+                            if (cash.isNotEmpty()) {
+                                IconButton(onClick = {
+                                    focusManager.clearFocus() // This will close the keyboard
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Done",
+                                        tint = Color(0xFF2f80eb)
+                                    )
+                                }
+                            }
+                        }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -1686,7 +1718,20 @@ fun CheckoutDialog(
                         label = { Text("Credit") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !isLoading
+                        enabled = !isLoading,
+                        trailingIcon = {
+                            if (credit.isNotEmpty()) {
+                                IconButton(onClick = {
+                                    focusManager.clearFocus() // This will close the keyboard
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Done",
+                                        tint = Color(0xFF2f80eb)
+                                    )
+                                }
+                            }
+                        }
                     )
                 }
             }
@@ -1834,12 +1879,15 @@ fun SearchableDropdown31(
     onClearSelection: () -> Unit = {}, // Keep this callback for clearing selection
     placeholder: String,
     modifier: Modifier = Modifier,
-    keyboardType: KeyboardType
+    keyboardType: KeyboardOptions
 ) {
     var expanded by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf(selectedItem ?: "") }
     val filteredOptions = options.filter { it.contains(searchQuery, ignoreCase = true) }
 
+    // Add the keyboard controller and focus manager
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
 
     Box(modifier = modifier.fillMaxWidth()) {
         Column {
@@ -1857,14 +1905,26 @@ fun SearchableDropdown31(
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
                         contentDescription = null,
-                        modifier = Modifier.clickable { expanded = !expanded }
+                        modifier = Modifier.clickable {
+                            expanded = !expanded
+                            if (!expanded) {
+                                // Hide keyboard when closing dropdown
+                                keyboardController?.hide()
+                                focusManager.clearFocus()
+                            }
+                        }
                     )
                 },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                keyboardOptions = keyboardType,
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                    }
+                ),
             )
-
 
             if (expanded) {
                 Box(
@@ -1894,6 +1954,10 @@ fun SearchableDropdown31(
                                             searchQuery = option
                                             onItemSelected(option)
                                             expanded = false
+
+                                            // Hide keyboard when selecting an item
+                                            keyboardController?.hide()
+                                            focusManager.clearFocus()
                                         }
                                         .padding(16.dp)
                                 )
@@ -1939,6 +2003,8 @@ fun AddCylinderDialog2(
 
 
     val coroutineScope = rememberCoroutineScope()
+
+    val focusManager = LocalFocusManager.current
 
 
     // Fetch gas types
@@ -2112,7 +2178,7 @@ fun AddCylinderDialog2(
                             selectedItem = gasType,
                             onItemSelected = { gasType = it },
                             placeholder = "Select Gas Type",
-                            keyboardType = KeyboardType.Text
+                            keyboardType = KeyboardOptions(keyboardType = KeyboardType.Text)
                         )
 
 
@@ -2123,7 +2189,7 @@ fun AddCylinderDialog2(
                             selectedItem = volumeType,
                             onItemSelected = { volumeType = it },
                             placeholder = "Select Volume Type",
-                            keyboardType = KeyboardType.Number
+                            keyboardType = KeyboardOptions(keyboardType = KeyboardType.Number)
                         )
 
 
@@ -2153,7 +2219,20 @@ fun AddCylinderDialog2(
                             onValueChange = { quantity = it },
                             label = { Text("Quantity") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                if (quantity.isNotEmpty()) {
+                                    IconButton(onClick = {
+                                        focusManager.clearFocus() // This will close the keyboard
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Done",
+                                            tint = Color(0xFF2f80eb)
+                                        )
+                                    }
+                                }
+                            }
                         )
                         // Display quantity error message
                         if (quantityError != null) {
@@ -2169,7 +2248,20 @@ fun AddCylinderDialog2(
                             onValueChange = { prices = it },
                             label = { Text("Price") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                if (quantity.isNotEmpty()) {
+                                    IconButton(onClick = {
+                                        focusManager.clearFocus() // This will close the keyboard
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Done",
+                                            tint = Color(0xFF2f80eb)
+                                        )
+                                    }
+                                }
+                            }
                         )
 
 
@@ -2962,7 +3054,7 @@ fun AddInventoryDialog(
                             selectedItem = inventoryName,
                             onItemSelected = { inventoryName = it },
                             placeholder = "Select Inventory Name",
-                            keyboardType = KeyboardType.Text
+                            keyboardType = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
                         )
 
 
@@ -2975,7 +3067,7 @@ fun AddInventoryDialog(
                             )
                         }
 
-
+                        val focusManager = LocalFocusManager.current
                         // Quantity Input
                         Text("Quantity", fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                         OutlinedTextField(
@@ -2983,7 +3075,20 @@ fun AddInventoryDialog(
                             onValueChange = { quantity = it },
                             label = { Text("Quantity") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                if (quantity.isNotEmpty()) {
+                                    IconButton(onClick = {
+                                        focusManager.clearFocus() // This will close the keyboard
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Done",
+                                            tint = Color(0xFF2f80eb)
+                                        )
+                                    }
+                                }
+                            }
                         )
                         // Display quantity error message
                         if (quantityError != null) {
@@ -3003,7 +3108,20 @@ fun AddInventoryDialog(
                             onValueChange = { price = it },
                             label = { Text("Price") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                if (price.isNotEmpty()) {
+                                    IconButton(onClick = {
+                                        focusManager.clearFocus() // This will close the keyboard
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Done",
+                                            tint = Color(0xFF2f80eb)
+                                        )
+                                    }
+                                }
+                            }
                         )
 
 

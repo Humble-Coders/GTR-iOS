@@ -55,6 +55,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -716,9 +717,10 @@ fun ReturnDialog(
     var deductRentFromDeposit by remember { mutableStateOf(false) }
     var rentFactor by remember { mutableStateOf("30") }
     var averageDays = 0
-    var totalDays = 0 // Add total days variable
+    var totalDays = 0 // Track total days
     var isLoading by remember { mutableStateOf(false) }
 
+    // Calculate the total rent
     val totalRent = remember(selectedCylinders, rentFactor) {
         val currentDate = Clock.System.now()
             .toLocalDateTime(TimeZone.currentSystemDefault())
@@ -726,13 +728,12 @@ fun ReturnDialog(
         totalDays = 0 // Reset total days
 
         // Filter out LPG cylinders
-        println("selectedCylindersOnReturnScreen: $selectedCylinders")
         val nonLpgCylinders = selectedCylinders.filter { cylinder ->
             cylinder.containsKey("Gas Type") // LPG cylinders do not have the "Gas Type" field
         }
         println("nonLpgCylindersOnReturnScreen: $nonLpgCylinders")
 
-        var cylinderCount = 0  // Add this before the forEach loop
+        var cylinderCount = 0
         nonLpgCylinders.forEach { cylinder ->
             val issueDateString = cylinder["Issue Date"] ?: ""
             val issueDate = try {
@@ -752,7 +753,7 @@ fun ReturnDialog(
             val previousDays = cylinder["Rent"]?.toIntOrNull() ?: 0
             totalDays += previousDays
 
-            cylinderCount++  // Increment counter for valid cylinders
+            cylinderCount++
         }
 
         // Calculate average after the forEach loop
@@ -772,6 +773,20 @@ fun ReturnDialog(
         } else {
             deposit ?: "N/A"
         }
+    }
+
+    // Calculate updated credit value based on cashIn
+    val updatedCredit = remember(credit, cashIn) {
+        val creditValue = credit?.toDoubleOrNull() ?: 0.0
+        val cashInValue = cashIn.toDoubleOrNull() ?: 0.0
+        (creditValue - cashInValue).coerceAtLeast(0.0).toString()
+    }
+
+    // Calculate final deposit after cashOut
+    val finalDeposit = remember(updatedDeposit, cashOut) {
+        val depositValue = updatedDeposit.toDoubleOrNull() ?: 0.0
+        val cashOutValue = cashOut.toDoubleOrNull() ?: 0.0
+        (depositValue - cashOutValue).coerceAtLeast(0.0).toString()
     }
 
     AlertDialog(
@@ -803,10 +818,14 @@ fun ReturnDialog(
                 )
                 Divider(modifier = Modifier.padding(vertical = 8.dp))
 
+
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(bottom = 4.dp)
                 ) {
+
+                    val focusManager = LocalFocusManager.current
                     OutlinedTextField(
                         value = rentFactor,
                         onValueChange = { rentFactor = it },
@@ -862,7 +881,9 @@ fun ReturnDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Cash in field
+                val focusManager = LocalFocusManager.current
+
+                // Cash in field - deduct from credit
                 OutlinedTextField(
                     value = cashIn,
                     onValueChange = { cashIn = it },
@@ -875,7 +896,7 @@ fun ReturnDialog(
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Cash in", color = Color(0xFF388E3C))
+                            Text("Cash in (deducts from credit)", color = Color(0xFF388E3C))
                         }
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -885,11 +906,31 @@ fun ReturnDialog(
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         focusedBorderColor = Color(0xFF388E3C),
                         unfocusedBorderColor = Color(0xFF388E3C).copy(alpha = 0.5f)
-                    )
+                    ),
+                    trailingIcon = {
+                        if (cashIn.isNotEmpty()) {
+                            IconButton(onClick = {
+                                focusManager.clearFocus() // This will close the keyboard
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Done",
+                                    tint = Color(0xFF2f80eb)
+                                )
+                            }
+                        }
+                    }
                 )
 
-                // Rest of the existing code...
-                // Cash out field
+                // Display updated credit amount
+                Text(
+                    text = "Updated Credit: ${updatedCredit}",
+                    fontSize = 12.sp,
+                    color = Color(0xFF388E3C),
+                    modifier = Modifier.padding(start = 8.dp, bottom = 8.dp)
+                )
+
+                // Cash out field - deduct from deposit
                 OutlinedTextField(
                     value = cashOut,
                     onValueChange = { cashOut = it },
@@ -902,7 +943,7 @@ fun ReturnDialog(
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Cash out", color = Color(0xAAD32F2F))
+                            Text("Cash out (deducts from deposit)", color = Color(0xAAD32F2F))
                         }
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -912,15 +953,50 @@ fun ReturnDialog(
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         focusedBorderColor = Color(0xFFD32F2F),
                         unfocusedBorderColor = Color(0xFFD32F2F).copy(alpha = 0.5f)
-                    )
+                    ),
+                    trailingIcon = {
+                        if (cashOut.isNotEmpty()) {
+                            IconButton(onClick = {
+                                focusManager.clearFocus() // This will close the keyboard
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Done",
+                                    tint = Color(0xFF2f80eb)
+                                )
+                            }
+                        }
+                    }
                 )
 
+                // Display final deposit amount
+                Text(
+                    text = "Final Deposit: ${finalDeposit}",
+                    fontSize = 12.sp,
+                    color = Color(0xAAD32F2F),
+                    modifier = Modifier.padding(start = 8.dp, bottom = 8.dp)
+                )
+
+                // Credit field - adds to credit
                 OutlinedTextField(
                     value = creditInput,
                     onValueChange = { creditInput = it },
-                    label = { Text("Credit") },
+                    label = { Text("Add Credit") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    trailingIcon = {
+                        if (creditInput.isNotEmpty()) {
+                            IconButton(onClick = {
+                                focusManager.clearFocus() // This will close the keyboard
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Done",
+                                    tint = Color(0xFF2f80eb)
+                                )
+                            }
+                        }
+                    }
                 )
             }
         },
@@ -937,10 +1013,11 @@ fun ReturnDialog(
                             cashIn = cashIn,
                             cashOut = cashOut,
                             creditInput = creditInput,
-                            updatedDeposit = updatedDeposit, // Pass the updatedDeposit value
+                            updatedDeposit = finalDeposit, // Pass the final deposit value
+                            updatedCredit = updatedCredit, // Pass the updated credit value
                             onSuccess = {
                                 // Call the original onReturn callback
-                                onReturn(updatedDeposit)
+                                onReturn(finalDeposit)
                                 component.onEvent(ReturnCylinderScreenEvent.OnConfirmClick(customerName, currentDateTime))
                             },
                             onFailure = { e ->
@@ -1192,6 +1269,7 @@ fun ReturnCylinderDialog(
                     ) {
                         Text("Return Cylinders", fontWeight = FontWeight.Bold, fontSize = 20.sp)
 
+                        val focusManager = LocalFocusManager.current
                         // Quantity Input
                         Text("Quantity", fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                         OutlinedTextField(
@@ -1199,7 +1277,20 @@ fun ReturnCylinderDialog(
                             onValueChange = { quantity = it },
                             label = { Text("Quantity") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                if (quantity.isNotEmpty()) {
+                                    IconButton(onClick = {
+                                        focusManager.clearFocus() // This will close the keyboard
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Done",
+                                            tint = Color(0xFF2f80eb)
+                                        )
+                                    }
+                                }
+                            }
                         )
                         // Display quantity error message
                         if (quantityError != null) {
@@ -1369,6 +1460,7 @@ fun ReturnLPGDialog(
                             keyboardType = KeyboardType.Number
                         )
 
+                        val focusManager = LocalFocusManager.current
                         // Quantity Input
                         Text("Quantity", fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                         OutlinedTextField(
@@ -1376,7 +1468,20 @@ fun ReturnLPGDialog(
                             onValueChange = { quantity = it },
                             label = { Text("Quantity") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                if (quantity.isNotEmpty()) {
+                                    IconButton(onClick = {
+                                        focusManager.clearFocus() // This will close the keyboard
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Done",
+                                            tint = Color(0xFF2f80eb)
+                                        )
+                                    }
+                                }
+                            }
                         )
 
                         // Display quantity error message in two lines
@@ -1759,6 +1864,7 @@ suspend fun updateCylindersOnReturn(
     cashOut: String,
     creditInput: String,
     updatedDeposit: String,
+    updatedCredit: String, // Added this parameter to receive the updated credit value
     onSuccess: () -> Unit,
     onFailure: (Exception) -> Unit,
     selectedReturnDate: Long,
@@ -1956,9 +2062,11 @@ suspend fun updateCylindersOnReturn(
                 if (customerDetailsSnapshot.exists) {
                     val detailsMap = customerDetailsSnapshot.get("Details") as? Map<String, String> ?: emptyMap()
 
-                    // Calculate new values
-                    val currentCredit = detailsMap["Credit"]?.toDoubleOrNull() ?: 0.0
-                    val newCredit = currentCredit + (creditInput.toDoubleOrNull() ?: 0.0)
+                    // Use the passed values for credit and deposit
+                    val newCredit = updatedCredit.toDoubleOrNull() ?: 0.0
+                    val additionalCredit = creditInput.toDoubleOrNull() ?: 0.0
+                    val finalCredit = newCredit + additionalCredit
+
                     val newDeposit = updatedDeposit.toDoubleOrNull() ?: 0.0
 
                     // Calculate new average days
@@ -1971,7 +2079,7 @@ suspend fun updateCylindersOnReturn(
 
                     // Update customer details
                     val updatedDetailsMap = detailsMap.toMutableMap().apply {
-                        this["Credit"] = newCredit.toString()
+                        this["Credit"] = finalCredit.toString()
                         this["Deposit"] = newDeposit.toString()
                         this["Average Days"] = newAverageDays.toString()
                     }

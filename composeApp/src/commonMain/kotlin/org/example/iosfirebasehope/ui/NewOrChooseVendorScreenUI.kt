@@ -27,6 +27,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -50,7 +51,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.InputMode.Companion.Keyboard
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -363,6 +368,9 @@ fun SearchableDropdownVendor(
     var searchQuery by remember { mutableStateOf(selectedItem ?: "") }
     val filteredOptions = options.filter { it.contains(searchQuery, ignoreCase = true) }
 
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+
     Box(modifier = modifier.fillMaxWidth()) {
         Column {
             OutlinedTextField(
@@ -379,7 +387,12 @@ fun SearchableDropdownVendor(
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
                         contentDescription = null,
-                        modifier = Modifier.clickable { expanded = !expanded }
+                        modifier = Modifier.clickable { expanded = !expanded
+                            if (!expanded) {
+                                // Hide keyboard when closing dropdown
+                                keyboardController?.hide()
+                                focusManager.clearFocus()
+                            }}
                     )
                 },
                 singleLine = true,
@@ -414,6 +427,10 @@ fun SearchableDropdownVendor(
                                             searchQuery = option
                                             onItemSelected(option)
                                             expanded = false
+
+                                            // Hide keyboard when selecting an item
+                                            keyboardController?.hide()
+                                            focusManager.clearFocus()
                                         }
                                         .padding(16.dp)
                                 )
@@ -483,16 +500,31 @@ fun AddVendorDialog(
                             value = name,
                             onValueChange = { name = it },
                             label = { Text("Name") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
                         )
 
                         // Phone Number Field
+                        val focusManager = LocalFocusManager.current
                         OutlinedTextField(
                             value = phoneNumber,
                             onValueChange = { phoneNumber = it },
                             label = { Text("Phone Number") },
                             modifier = Modifier.fillMaxWidth(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                            trailingIcon = {
+                                if (phoneNumber.isNotEmpty()) {
+                                    androidx.compose.material.IconButton(onClick = {
+                                        focusManager.clearFocus() // This will close the keyboard
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Done",
+                                            tint = Color(0xFF2f80eb)
+                                        )
+                                    }
+                                }
+                            }
                         )
 
                         // Address Field
@@ -500,7 +532,8 @@ fun AddVendorDialog(
                             value = address,
                             onValueChange = { address = it },
                             label = { Text("Address") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
                         )
 
                         // UID Field
@@ -508,7 +541,8 @@ fun AddVendorDialog(
                             value = uid,
                             onValueChange = { uid = it },
                             label = { Text("UID") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
                         )
 
                         // Reference Name Field

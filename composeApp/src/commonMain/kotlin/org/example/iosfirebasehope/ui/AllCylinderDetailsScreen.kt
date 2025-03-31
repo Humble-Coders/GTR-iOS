@@ -11,16 +11,19 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import org.example.iosfirebasehope.navigation.components.AllCylinderDetailsScreenComponent
 import org.example.iosfirebasehope.navigation.events.AllCylinderDetailsScreenEvent
@@ -101,6 +104,8 @@ fun AllCylinderDetailsScreenUI(
                     .padding(top = 16.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
+
+                val focusManager = LocalFocusManager.current
                 OutlinedTextField(
                     value = searchQuery,
                     leadingIcon = {
@@ -109,11 +114,12 @@ fun AllCylinderDetailsScreenUI(
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = {
-                                searchQuery = ""
+                                focusManager.clearFocus() // This will close the keyboard
                             }) {
                                 Icon(
-                                    imageVector = Icons.Filled.Close,
-                                    contentDescription = "Clear Text"
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Done",
+                                    tint = Color(0xFF2f80eb)
                                 )
                             }
                         }
@@ -131,7 +137,8 @@ fun AllCylinderDetailsScreenUI(
                         focusedBorderColor = Color(0xFF2f80eb),
                         unfocusedBorderColor = Color(0xFF2f80eb)
                     ),
-                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
+                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+
                 )
             }
 

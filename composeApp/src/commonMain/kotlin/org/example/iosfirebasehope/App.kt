@@ -18,7 +18,6 @@ import org.example.iosfirebasehope.ui.CustomerDetailsScreenUI
 import org.example.iosfirebasehope.ui.CylinderStatusScreenUI
 import org.example.iosfirebasehope.ui.ExchangeCylinderScreenUI
 import org.example.iosfirebasehope.ui.GasVolumeScreenUI
-import org.example.iosfirebasehope.ui.GenerateBillScreenUI
 import org.example.iosfirebasehope.ui.GenerateChallanScreenUI
 import org.example.iosfirebasehope.ui.HomeScreenUI
 import org.example.iosfirebasehope.ui.InventoryScreenUI
@@ -57,6 +56,7 @@ import org.example.iosfirebasehope.ui.AddInventoryScreenUI
 import org.example.iosfirebasehope.ui.CreditListScreen
 import org.example.iosfirebasehope.ui.CurrentlyIssuedScreenUI
 import org.example.iosfirebasehope.ui.DailyBookScreenUI
+import org.example.iosfirebasehope.ui.GenerateBillScreenUI1
 import org.example.iosfirebasehope.ui.InventoryVendorDetailsScreenUI
 import org.example.iosfirebasehope.ui.InventoryVendorsScreenUI
 
@@ -92,7 +92,7 @@ fun App(rootComponent: RootComponent, db: FirebaseFirestore){
                 is AllCylinderDetailsScreen -> AllCylinderDetailsScreenUI(instance.component, db= db)
                 is CurrentCylinderDetailsScreen -> CurrentCylinderDetailsUI(component = instance.component, initialCylinderDetails = instance.component.currentCylinderDetails, db = db)
                 is BillScreen -> BillScreenUI(instance.component, db)
-               // is IssueNewCylinderScreen -> IssueNewCylinderScreenUI(instance.component, db)
+                // is IssueNewCylinderScreen -> IssueNewCylinderScreenUI(instance.component, db)
                 is NewOrChooseCustomerScreen -> NewOrChooseCustomerScreenUI(instance.component, db)
                 is InventoryScreen -> InventoryScreenUI(instance.component, db)
                 is AllCustomerScreen -> AllCustomersScreenUI(instance.component, db, instance.component.cylinderDetailsList, instance.component.gasList)
@@ -113,7 +113,7 @@ fun App(rootComponent: RootComponent, db: FirebaseFirestore){
                     db = db,
                     VendorName = instance.component.VendorName,
                 )
-                is Child.GenerateBillScreen -> GenerateBillScreenUI(
+                is Child.GenerateBillScreen -> GenerateBillScreenUI1(
                     customerName = instance.component.customerName,
                     dateTime = instance.component.dateTime,
                     db = db,

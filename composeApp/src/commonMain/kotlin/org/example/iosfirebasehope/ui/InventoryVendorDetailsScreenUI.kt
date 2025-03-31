@@ -36,6 +36,7 @@ import androidx.compose.material.TextButton
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -49,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -701,6 +703,7 @@ fun CashPaymentDialog(
                         Divider(modifier = Modifier.padding(vertical = 4.dp))
 
                         // Cash Payment Field
+                        val focusManager = LocalFocusManager.current
                         OutlinedTextField(
                             value = cashPayment,
                             onValueChange = { cashPayment = it },
@@ -709,7 +712,20 @@ fun CashPaymentDialog(
                             keyboardOptions = KeyboardOptions.Default.copy(
                                 keyboardType = KeyboardType.Number,
                                 imeAction = ImeAction.Done
-                            )
+                            ),
+                            trailingIcon = {
+                                if (cashPayment.isNotEmpty()) {
+                                    IconButton(onClick = {
+                                        focusManager.clearFocus() // This will close the keyboard
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Done",
+                                            tint = Color(0xFF2f80eb)
+                                        )
+                                    }
+                                }
+                            }
                         )
 
                         // Error Message

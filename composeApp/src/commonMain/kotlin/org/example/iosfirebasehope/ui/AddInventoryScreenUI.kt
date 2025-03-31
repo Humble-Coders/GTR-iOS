@@ -17,6 +17,7 @@ import androidx.compose.material.Divider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -39,7 +40,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -225,7 +228,8 @@ fun AddInventoryScreenUI(component: AddInventoryScreenComponent, db: FirebaseFir
                             onValueChange = { itemName = it },
                             label = { Text("Item Name*") },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp)
+                            shape = RoundedCornerShape(8.dp),
+                            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -235,13 +239,27 @@ fun AddInventoryScreenUI(component: AddInventoryScreenComponent, db: FirebaseFir
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            val focusManager = LocalFocusManager.current
                             OutlinedTextField(
                                 value = quantity,
                                 onValueChange = { quantity = it },
                                 label = { Text("Quantity*") },
                                 modifier = Modifier.weight(1f),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                shape = RoundedCornerShape(8.dp)
+                                shape = RoundedCornerShape(8.dp),
+                                trailingIcon = {
+                                    if (quantity.isNotEmpty()) {
+                                        androidx.compose.material.IconButton(onClick = {
+                                            focusManager.clearFocus() // This will close the keyboard
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Done",
+                                                tint = Color(0xFF2f80eb)
+                                            )
+                                        }
+                                    }
+                                }
                             )
 
                             Column(modifier = Modifier.weight(1f)) {
@@ -264,7 +282,8 @@ fun AddInventoryScreenUI(component: AddInventoryScreenComponent, db: FirebaseFir
                                 onValueChange = { customUnit = it },
                                 label = { Text("Custom Unit*") },
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp)
+                                shape = RoundedCornerShape(8.dp),
+                                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
                             )
                         }
 
@@ -275,13 +294,27 @@ fun AddInventoryScreenUI(component: AddInventoryScreenComponent, db: FirebaseFir
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            val focusManager = LocalFocusManager.current
                             OutlinedTextField(
                                 value = costPrice,
                                 onValueChange = { costPrice = it },
                                 label = { Text("Cost Price*") },
                                 modifier = Modifier.weight(1f),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                shape = RoundedCornerShape(8.dp)
+                                shape = RoundedCornerShape(8.dp),
+                                trailingIcon = {
+                                    if (costPrice.isNotEmpty()) {
+                                        androidx.compose.material.IconButton(onClick = {
+                                            focusManager.clearFocus() // This will close the keyboard
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Done",
+                                                tint = Color(0xFF2f80eb)
+                                            )
+                                        }
+                                    }
+                                }
                             )
 
                             OutlinedTextField(
@@ -290,7 +323,20 @@ fun AddInventoryScreenUI(component: AddInventoryScreenComponent, db: FirebaseFir
                                 label = { Text("Sale Price*") },
                                 modifier = Modifier.weight(1f),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                shape = RoundedCornerShape(8.dp)
+                                shape = RoundedCornerShape(8.dp),
+                                trailingIcon = {
+                                    if (salePrice.isNotEmpty()) {
+                                        androidx.compose.material.IconButton(onClick = {
+                                            focusManager.clearFocus() // This will close the keyboard
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Done",
+                                                tint = Color(0xFF2f80eb)
+                                            )
+                                        }
+                                    }
+                                }
                             )
                         }
 
@@ -303,7 +349,8 @@ fun AddInventoryScreenUI(component: AddInventoryScreenComponent, db: FirebaseFir
                             label = { Text("Description") },
                             modifier = Modifier.fillMaxWidth(),
                             minLines = 3,
-                            shape = RoundedCornerShape(8.dp)
+                            shape = RoundedCornerShape(8.dp),
+                            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
                         )
                     }
                 }
@@ -653,17 +700,32 @@ fun AddInventoryVendorDialog(
                     onValueChange = { name = it },
                     label = { Text("Vendor Name*") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
                 )
 
                 // Phone Number Field
+                val focusManager = LocalFocusManager.current
                 OutlinedTextField(
                     value = phoneNumber,
                     onValueChange = { phoneNumber = it },
                     label = { Text("Phone Number") },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    trailingIcon = {
+                        if (phoneNumber.isNotEmpty()) {
+                            androidx.compose.material.IconButton(onClick = {
+                                focusManager.clearFocus() // This will close the keyboard
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Done",
+                                    tint = Color(0xFF2f80eb)
+                                )
+                            }
+                        }
+                    }
                 )
 
                 // Address Field
@@ -673,7 +735,8 @@ fun AddInventoryVendorDialog(
                     label = { Text("Address") },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2,
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
                 )
 
                 // UID Field
@@ -682,7 +745,8 @@ fun AddInventoryVendorDialog(
                     onValueChange = { uid = it },
                     label = { Text("UID") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
                 )
 
                 // Buttons

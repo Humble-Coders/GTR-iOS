@@ -244,21 +244,33 @@ fun HomeScreenUI(component: HomeScreenComponent, db: FirebaseFirestore) {
                         backgroundColor = Color(0xFF2f80eb),
                         contentColor = Color.White,
                         navigationIcon = {
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            IconButton(
+                                onClick = {
+                                    if (!isLoading) {
+                                        scope.launch { drawerState.open() }
+                                    }
+                                },
+                                enabled = !isLoading
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Menu,
-                                    contentDescription = "Menu"
+                                    contentDescription = "Menu",
+                                    tint = if (isLoading) Color.Gray else Color.White
                                 )
                             }
                         },
                         actions = {
-                            IconButton(onClick = {
-                                val filteredCylinderDetailList= cylinderDetailsList.filter { it["Status"] == "Issued" }
-                                component.onEvent(HomeScreenEvent.OnNotificationClick(filteredCylinderDetailList))
-                            }) {
+                            IconButton(
+                                onClick = {
+                                    val filteredCylinderDetailList = cylinderDetailsList.filter { it["Status"] == "Issued" }
+                                    component.onEvent(HomeScreenEvent.OnNotificationClick(filteredCylinderDetailList))
+                                },
+                                enabled = !isLoading
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Notifications,
-                                    contentDescription = "Notifications"
+                                    contentDescription = "Notifications",
+                                    tint = if (isLoading) Color.Gray else Color.White
                                 )
                             }
                         }

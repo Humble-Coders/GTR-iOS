@@ -43,6 +43,7 @@ fun TransactionDetailsScreen(
     var showCylindersIssuedPopup by remember { mutableStateOf(false) }
     var showCylindersReturnedPopup by remember { mutableStateOf(false) }
     var showLPGIssuedPopup by remember { mutableStateOf(false) }
+    var showLPGReturnedPopup by remember { mutableStateOf(false) }
     var showInventoryIssuedPopup by remember { mutableStateOf(false) }
 
     // Fetch transaction details and cylinder details on launch
@@ -110,6 +111,7 @@ fun TransactionDetailsScreen(
             val inventoryIssued = transactionDetails!!["InventoryIssued"] as List<Map<String, String>>
             val price = transactionDetails!!["Total Price"] as String
             val cashOut = transactionDetails!!["Cash Out"] as String
+            val lpgReturned = transactionDetails!!["LPGReturned"] as List<Map<String, String>>
 
             // Use LazyColumn as the root container for scrollable content
             LazyColumn(
@@ -161,6 +163,17 @@ fun TransactionDetailsScreen(
                         onClick = { showLPGIssuedPopup = true }
                     )
                 }
+                item {
+                    // For LPG Returned, calculate the total from the returned list
+                    val totalLpgReturnedQuantity = lpgReturned.sumOf {
+                        (it["Quantity"] ?: "0").toIntOrNull() ?: 0
+                    }
+                    TransactionTypeCard(
+                        title = "LPG Returned",
+                        count = totalLpgReturnedQuantity,
+                        onClick = { showLPGReturnedPopup = true }
+                    )
+                }
 
                 item {
                     // For Inventory, show the list size as before
@@ -202,6 +215,14 @@ fun TransactionDetailsScreen(
                     items = lpgIssued,
                     cylinderDetails = emptyList(), // Not needed for LPG
                     onDismiss = { showLPGIssuedPopup = false }
+                )
+            }
+            if (showLPGReturnedPopup) {
+                TransactionDetailsPopup(
+                    title = "LPG Returned",
+                    items = lpgReturned,
+                    cylinderDetails = emptyList(), // Not needed for LPG
+                    onDismiss = { showLPGReturnedPopup = false }
                 )
             }
 
@@ -446,7 +467,17 @@ private fun TransactionDetailsPopup(
                                         quantity = item["Quantity"] ?: "N/A",
                                         price = item["Price"] ?: "N/A",
                                         date = item["Date"] ?: "N/A",
-                                        volumeType = item["Volume Type"] ?: "N/A"
+                                        volumeType = item["Volume Type"] ?: "N/A",
+                                        isReturned = false
+                                    )
+                                }
+                                "LPG Returned" -> {
+                                    LPGDetailItem(
+                                        quantity = item["Quantity"] ?: "N/A",
+                                        price = item["Price"] ?: "N/A",
+                                        date = item["Date"] ?: "N/A",
+                                        volumeType = item["Volume Type"] ?: "N/A",
+                                        isReturned = true  // Set to true for LPG Returned
                                     )
                                 }
                                 "Inventory Issued" -> {
@@ -525,7 +556,8 @@ private fun LPGDetailItem(
     quantity: String,
     price: String,
     date: String,
-    volumeType: String
+    volumeType: String,
+    isReturned: Boolean = false // Add new parameter with default value
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -555,21 +587,27 @@ private fun LPGDetailItem(
                     color = Color(0xFF2E7D32)
                 )
 
+                // Only show date if not an LPG returned item
+                if (!isReturned) {
+                    Text(
+                        text = "Date: $date",
+                        fontSize = 14.sp,
+                        color = Color(0xFF2E7D32)
+                    )
+                }
+            }
+
+            // Only show price if not an LPG returned item
+            if (!isReturned) {
+                Spacer(modifier = Modifier.height(4.dp))
+
                 Text(
-                    text = "Date: $date",
+                    text = "Price: Rs. $price",
                     fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
                     color = Color(0xFF2E7D32)
                 )
             }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = "Price: Rs. $price",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF2E7D32)
-            )
         }
     }
 }
@@ -642,6 +680,7 @@ private suspend fun fetchCustomerTransactionDetails(
     val cylindersIssuedDoc = transactionDetailsCollection.document("Cylinders Issued").get()
     val cylindersReturnedDoc = transactionDetailsCollection.document("Cylinders Returned").get()
     val lpgIssuedDoc = transactionDetailsCollection.document("LPG Issued").get()
+    val lpgReturnedDoc = transactionDetailsCollection.document("LPG Returned").get()
     val inventoryIssuedDoc = transactionDetailsCollection.document("Inventory Issued").get()
     val priceDoc = transactionDetailsCollection.document("Total Price").get()
     val CashOutDoc = transactionDetailsCollection.document("Cash Out").get()
@@ -654,7 +693,16 @@ private suspend fun fetchCustomerTransactionDetails(
     val cylindersIssued = cylindersIssuedDoc.get("CylindersIssued") as? List<Map<String, String>> ?: emptyList()
     val cylindersReturned = cylindersReturnedDoc.get("CylindersReturned") as? List<Map<String, String>> ?: emptyList()
     val lpgIssued = lpgIssuedDoc.get("LPGIssued") as? List<Map<String, String>> ?: emptyList()
+    val lpgReturnedMap = lpgReturnedDoc.get("LPGReturned") as? Map<String, Int> ?: emptyMap()
     val inventoryIssued = inventoryIssuedDoc.get("InventoryIssued") as? List<Map<String, String>> ?: emptyList()
+
+    val lpgReturned = lpgReturnedMap.map { (volumeType, quantity) ->
+        mapOf(
+            "Volume Type" to volumeType,
+            "Quantity" to quantity.toString(),
+            // If you don't have price data for returned LPG, use "N/A" or "0
+        )
+    }
 
     return mapOf(
         "Cash" to cashAmount,
@@ -664,6 +712,7 @@ private suspend fun fetchCustomerTransactionDetails(
         "LPGIssued" to lpgIssued,
         "InventoryIssued" to inventoryIssued,
         "Total Price" to price,
-        "Cash Out" to CashOut
+        "Cash Out" to CashOut,
+        "LPGReturned" to lpgReturned
     )
 }

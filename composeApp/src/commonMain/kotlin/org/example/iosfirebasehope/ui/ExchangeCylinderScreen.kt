@@ -61,6 +61,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -802,7 +804,7 @@ fun ExchangeCylinderScreenUI(
                     colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF4CAF50)) // Green color
                 ) {
                     Text(
-                        text = "Checkout: $${totalPrice}",
+                        text = "Checkout: ₹${totalPrice}",
                         fontSize = 14.sp, // Slightly larger font size for emphasis
                         color = Color.White,
                         maxLines = 1, // Prevent text wrapping
@@ -971,7 +973,7 @@ fun CheckoutDialog9(
                 Column {
                     // Display total price
                     Text(
-                        text = "Total Price: $${totalPrice}",
+                        text = "Total Price: ₹${totalPrice}",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -997,7 +999,7 @@ fun CheckoutDialog9(
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
-
+                    val focusManager = LocalFocusManager.current
                     // Cash input
                     OutlinedTextField(
                         value = cash,
@@ -1005,7 +1007,20 @@ fun CheckoutDialog9(
                         label = { Text("Cash") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !isLoading
+                        enabled = !isLoading,
+                        trailingIcon = {
+                            if (cash.isNotEmpty()) {
+                                IconButton(onClick = {
+                                    focusManager.clearFocus() // This will close the keyboard
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Done",
+                                        tint = Color(0xFF2f80eb)
+                                    )
+                                }
+                            }
+                        }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -1019,7 +1034,20 @@ fun CheckoutDialog9(
                         label = { Text("Credit") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !isLoading
+                        enabled = !isLoading,
+                        trailingIcon = {
+                            if (credit.isNotEmpty()) {
+                                IconButton(onClick = {
+                                    focusManager.clearFocus() // This will close the keyboard
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Done",
+                                        tint = Color(0xFF2f80eb)
+                                    )
+                                }
+                            }
+                        }
                     )
                 }
 
@@ -1515,7 +1543,7 @@ fun AddCylinderDialog9(
                             )
                         }
 
-
+                        val focusManager = LocalFocusManager.current
                         Text("Quantity & Price", fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                         // Quantity Input
                         OutlinedTextField(
@@ -1523,7 +1551,20 @@ fun AddCylinderDialog9(
                             onValueChange = { quantity = it },
                             label = { Text("Quantity") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                if (quantity.isNotEmpty()) {
+                                    IconButton(onClick = {
+                                        focusManager.clearFocus() // This will close the keyboard
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Done",
+                                            tint = Color(0xFF2f80eb)
+                                        )
+                                    }
+                                }
+                            }
                         )
                         // Display quantity error message
                         if (quantityError != null) {
@@ -1539,7 +1580,20 @@ fun AddCylinderDialog9(
                             onValueChange = { prices = it },
                             label = { Text("Price") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                if (prices.isNotEmpty()) {
+                                    IconButton(onClick = {
+                                        focusManager.clearFocus() // This will close the keyboard
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Done",
+                                            tint = Color(0xFF2f80eb)
+                                        )
+                                    }
+                                }
+                            }
                         )
 
 
@@ -1769,6 +1823,8 @@ fun SearchableDropdown9(
         it["Serial Number"]?.contains(searchQuery, ignoreCase = true) == true
     }
 
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
 
     Box(modifier = modifier.fillMaxWidth()) {
         Column {
@@ -1786,7 +1842,10 @@ fun SearchableDropdown9(
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
                         contentDescription = null,
-                        modifier = Modifier.clickable { expanded = !expanded }
+                        modifier = Modifier.clickable { expanded = !expanded
+                            focusManager.clearFocus()
+                            keyboardController?.hide()
+                        }
                     )
                 },
                 singleLine = true,
@@ -1829,6 +1888,9 @@ fun SearchableDropdown9(
                                             searchQuery = serialNumber
                                             onItemSelected(serialNumber)
                                             expanded = false
+
+                                            keyboardController?.hide()
+                                            focusManager.clearFocus()
                                         }
                                         .padding(16.dp)
                                 )
@@ -2913,7 +2975,7 @@ fun ExchangeDialog(
                             }
                         }
 
-
+                        val focusManager = LocalFocusManager.current
                         if (isLPGSelected) {
                             // Return Section
                             Text("Return", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(top = 8.dp))
@@ -2931,6 +2993,7 @@ fun ExchangeDialog(
                             )
 
 
+
                             Text("Quantity Return", fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                             OutlinedTextField(
                                 value = quantityReturn,
@@ -2946,7 +3009,20 @@ fun ExchangeDialog(
                                 },
                                 label = { Text("Quantity Return") },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                trailingIcon = {
+                                    if (quantityReturn.isNotEmpty()) {
+                                        IconButton(onClick = {
+                                            focusManager.clearFocus() // This will close the keyboard
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Done",
+                                                tint = Color(0xFF2f80eb)
+                                            )
+                                        }
+                                    }
+                                }
                             )
                             if (quantityReturnExceedsIssuedError != null) {
                                 Text(
@@ -2973,7 +3049,7 @@ fun ExchangeDialog(
                                 keyboardType = KeyboardType.Number
                             )
 
-
+                            val focusManager = LocalFocusManager.current
                             Text("Quantity", fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                             OutlinedTextField(
                                 value = quantity,
@@ -2989,7 +3065,20 @@ fun ExchangeDialog(
                                 },
                                 label = { Text("Quantity") },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                trailingIcon = {
+                                    if (quantity.isNotEmpty()) {
+                                        IconButton(onClick = {
+                                            focusManager.clearFocus() // This will close the keyboard
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Done",
+                                                tint = Color(0xFF2f80eb)
+                                            )
+                                        }
+                                    }
+                                }
                             )
                             if (quantityExceedsAvailableError != null) {
                                 Text(
@@ -3007,17 +3096,45 @@ fun ExchangeDialog(
                                 onValueChange = { exchangePrice = it },
                                 label = { Text("Price") },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                trailingIcon = {
+                                    if (exchangePrice.isNotEmpty()) {
+                                        IconButton(onClick = {
+                                            focusManager.clearFocus() // This will close the keyboard
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Done",
+                                                tint = Color(0xFF2f80eb)
+                                            )
+                                        }
+                                    }
+                                }
                             )
                         } else {
                             // Non-LPG Section
+
+                            val focusManager = LocalFocusManager.current
                             Text("Quantity", fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                             OutlinedTextField(
                                 value = quantity,
                                 onValueChange = { quantity = it },
                                 label = { Text("Quantity") },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                trailingIcon = {
+                                    if (quantity.isNotEmpty()) {
+                                        IconButton(onClick = {
+                                            focusManager.clearFocus() // This will close the keyboard
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Done",
+                                                tint = Color(0xFF2f80eb)
+                                            )
+                                        }
+                                    }
+                                }
                             )
 
 
@@ -3028,7 +3145,20 @@ fun ExchangeDialog(
                                 onValueChange = { commonPrice = it },
                                 label = { Text("Price") },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                trailingIcon = {
+                                    if (commonPrice.isNotEmpty()) {
+                                        IconButton(onClick = {
+                                            focusManager.clearFocus() // This will close the keyboard
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Done",
+                                                tint = Color(0xFF2f80eb)
+                                            )
+                                        }
+                                    }
+                                }
                             )
 
 
@@ -3359,6 +3489,8 @@ fun SearchableDropdown3(
         it.contains(searchQuery, ignoreCase = true)
     }
 
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
 
     Box(modifier = Modifier.fillMaxWidth()) {
         Column {
@@ -3376,7 +3508,13 @@ fun SearchableDropdown3(
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
                         contentDescription = null,
-                        modifier = Modifier.clickable { expanded = !expanded }
+                        modifier = Modifier.clickable { expanded = !expanded
+                            if (!expanded) {
+                                // Hide keyboard when closing dropdown
+                                keyboardController?.hide()
+                                focusManager.clearFocus()
+                            }}
+
                     )
                 },
                 singleLine = true,
@@ -3413,6 +3551,10 @@ fun SearchableDropdown3(
                                             searchQuery = option
                                             onItemSelected(option)
                                             expanded = false
+
+                                            // Hide keyboard when selecting an item
+                                            keyboardController?.hide()
+                                            focusManager.clearFocus()
                                         }
                                         .padding(16.dp)
                                 )
@@ -3723,7 +3865,7 @@ fun AddInventoryDialog2(
                             )
                         }
 
-
+                        val focusManager = LocalFocusManager.current
                         // Quantity Input
                         Text("Quantity", fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                         OutlinedTextField(
@@ -3731,7 +3873,20 @@ fun AddInventoryDialog2(
                             onValueChange = { quantity = it },
                             label = { Text("Quantity") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                if (quantity.isNotEmpty()) {
+                                    IconButton(onClick = {
+                                        focusManager.clearFocus() // This will close the keyboard
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Done",
+                                            tint = Color(0xFF2f80eb)
+                                        )
+                                    }
+                                }
+                            }
                         )
                         // Display quantity error message
                         if (quantityError != null) {
@@ -3751,7 +3906,20 @@ fun AddInventoryDialog2(
                             onValueChange = { price = it },
                             label = { Text("Price") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                if (price.isNotEmpty()) {
+                                    IconButton(onClick = {
+                                        focusManager.clearFocus() // This will close the keyboard
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Done",
+                                            tint = Color(0xFF2f80eb)
+                                        )
+                                    }
+                                }
+                            }
                         )
 
 

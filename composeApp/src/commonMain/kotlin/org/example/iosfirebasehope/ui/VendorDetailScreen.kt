@@ -47,6 +47,7 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.rememberScaffoldState
@@ -63,6 +64,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -346,6 +348,8 @@ fun VendorDetailsScreenUI(
             }
 
             // Search bar for cylinders
+
+            val focusManager = LocalFocusManager.current
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -357,17 +361,6 @@ fun VendorDetailsScreenUI(
                         tint = Color(0xFF2f80eb)
                     )
                 },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Clear",
-                                tint = Color(0xFF2f80eb)
-                            )
-                        }
-                    }
-                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -377,7 +370,20 @@ fun VendorDetailsScreenUI(
                     unfocusedBorderColor = Color.LightGray,
                     backgroundColor = Color.White
                 ),
-                singleLine = true
+                singleLine = true,
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = {
+                            focusManager.clearFocus() // This will close the keyboard
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Done",
+                                tint = Color(0xFF2f80eb)
+                            )
+                        }
+                    }
+                }
             )
 
             // Cylinder groups display
@@ -846,6 +852,7 @@ fun CashTransactionDialogVendor(
                         )
 
                         // Cash In Field
+                        val focusManager = LocalFocusManager.current
                         OutlinedTextField(
                             value = cashIn,
                             onValueChange = { cashIn = it },
@@ -854,7 +861,20 @@ fun CashTransactionDialogVendor(
                             keyboardOptions = KeyboardOptions.Default.copy(
                                 keyboardType = KeyboardType.Number,
                                 imeAction = ImeAction.Done
-                            )
+                            ),
+                            trailingIcon = {
+                                if (cashIn.isNotEmpty()) {
+                                    IconButton(onClick = {
+                                        focusManager.clearFocus() // This will close the keyboard
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Done",
+                                            tint = Color(0xFF2f80eb)
+                                        )
+                                    }
+                                }
+                            }
                         )
 
                         // Error Message

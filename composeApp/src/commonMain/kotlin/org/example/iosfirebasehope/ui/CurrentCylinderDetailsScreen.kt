@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
@@ -41,6 +42,7 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -55,7 +57,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -647,7 +653,7 @@ private fun SearchHeader(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(47.dp) // Reduced height for the entire header
+            .height(60.dp) // Reduced height for the entire header
             .padding(bottom = 4.dp) // Reduced bottom padding
     ) {
         AnimatedVisibility(
@@ -683,7 +689,8 @@ private fun SearchHeader(
                     unfocusedBorderColor = Color(0xFF2f80eb)
                 ),
                 singleLine = true,
-                visualTransformation = VisualTransformation.None
+                visualTransformation = VisualTransformation.None,
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
             )
         }
 
@@ -963,6 +970,11 @@ fun EditCylinderDetailsDialog(
     var isStatusDropdownExpanded by remember { mutableStateOf(false) }
     val statusOptions = listOf("Full", "Empty", "Repair")
 
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val batchNumberFocusRequester = remember { FocusRequester() }
+
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Edit Cylinder Details", fontWeight = FontWeight.Bold) },
@@ -972,12 +984,46 @@ fun EditCylinderDetailsDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // Batch Number Field
+                // Batch Number Field
                 OutlinedTextField(
                     value = batchNumber,
                     onValueChange = { batchNumber = it },
                     label = { Text("Batch Number") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(batchNumberFocusRequester),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
+                        }
+                    ),
+                    trailingIcon = {
+                        if (batchNumber.isNotEmpty()) {
+                            IconButton(
+                                onClick = {
+                                    // Use both methods to ensure keyboard dismissal
+                                    keyboardController?.hide()
+                                    focusManager.clearFocus()
+
+                                    // Force UI update by briefly changing focus
+                                    batchNumberFocusRequester.requestFocus()
+                                    focusManager.clearFocus()
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Done",
+                                    tint = Color(0xFF2f80eb)
+                                )
+                            }
+                        }
+                    }
                 )
 
                 // Remarks Field
@@ -985,7 +1031,8 @@ fun EditCylinderDetailsDialog(
                     value = remarks,
                     onValueChange = { remarks = it },
                     label = { Text("Remarks") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
                 )
 
                 // Status Dropdown

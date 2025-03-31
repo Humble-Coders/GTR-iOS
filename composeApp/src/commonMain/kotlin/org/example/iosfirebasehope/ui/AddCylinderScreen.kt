@@ -12,6 +12,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
@@ -23,6 +24,7 @@ import dev.gitlive.firebase.firestore.FieldValue
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -174,6 +176,8 @@ fun AddCylinderScreenUI(component: AddCylinderScreenComponent, db: FirebaseFires
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    val focusManager = LocalFocusManager.current
+
                     // Conditional UI for Serial Number or Quantity
                     if (selectedGasType != "LPG") {
                         Text("Serial Number", color = Color(0xFF2f80eb))
@@ -200,7 +204,20 @@ fun AddCylinderScreenUI(component: AddCylinderScreenComponent, db: FirebaseFires
                             ),
                             keyboardActions = KeyboardActions(
                                 onDone = { keyboardController?.hide() }
-                            )
+                            ),
+                            trailingIcon = {
+                                if (serialNumber.isNotEmpty()) {
+                                    IconButton(onClick = {
+                                        focusManager.clearFocus() // This will close the keyboard
+                                    }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Done",
+                                            tint = Color(0xFF2f80eb)
+                                        )
+                                    }
+                                }
+                            }
                         )
                         // Show error message if Serial Number exists
                         if (isSerialNumberExists) {
@@ -261,7 +278,20 @@ fun AddCylinderScreenUI(component: AddCylinderScreenComponent, db: FirebaseFires
                         ),
                         keyboardActions = KeyboardActions(
                             onDone = { keyboardController?.hide() }
-                        )
+                        ),
+                        trailingIcon = {
+                            if (batchNumber.isNotEmpty()) {
+                                IconButton(onClick = {
+                                    focusManager.clearFocus() // This will close the keyboard
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Done",
+                                        tint = Color(0xFF2f80eb)
+                                    )
+                                }
+                            }
+                        }
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
