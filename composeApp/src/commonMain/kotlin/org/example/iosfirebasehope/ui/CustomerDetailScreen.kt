@@ -616,18 +616,35 @@ fun CustomerDetailsScreenUI(
                 )
             }
 
-            Button(
-                onClick = { isCashDialogActive = true },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp),
-                colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2f80eb))
+            Row(
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "Cash Transaction",
-                    color = Color.White,
-                    fontSize = 16.sp
-                )
+                Button(
+                    onClick = { isCashDialogActive = true },
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 16.dp, end = 16.dp),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2f80eb))
+                ) {
+                    Text(
+                        text = "Cash +",
+                        color = Color.White,
+                        fontSize = 16.sp
+                    )
+                }
+                Button(
+                    onClick = { isCreditDialogActive = true },
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 16.dp, end = 16.dp),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2f80eb))
+                ) {
+                    Text(
+                        text = "Credit +",
+                        color = Color.White,
+                        fontSize = 16.sp
+                    )
+                }
             }
 
             if (isCashDialogActive) {
