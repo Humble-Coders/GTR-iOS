@@ -715,7 +715,7 @@ fun ReturnDialog(
     var cashOut by remember { mutableStateOf("") }
     var creditInput by remember { mutableStateOf("") }
     var deductRentFromDeposit by remember { mutableStateOf(false) }
-    var rentFactor by remember { mutableStateOf("30") }
+    var rentFactor by remember { mutableStateOf("0") }
     var averageDays = 0
     var totalDays = 0 // Track total days
     var isLoading by remember { mutableStateOf(false) }
@@ -762,7 +762,7 @@ fun ReturnDialog(
         println("cylinderCount: $cylinderCount")
         println("averageDays: $averageDays")
 
-        val factor = rentFactor.toDoubleOrNull() ?: 30.0
+        val factor = rentFactor.toDoubleOrNull() ?: 0.0
         totalDays * factor // Multiply totalDays by the factor to get the total rent
     }
 

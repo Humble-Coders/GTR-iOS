@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.DateRange
@@ -171,7 +172,7 @@ fun HomeScreenUI(component: HomeScreenComponent, db: FirebaseFirestore) {
                     Divider(color = Color.Gray, thickness = 1.dp)
 
                     DrawerItem(
-                        icon = Icons.Default.Add,
+                        icon = Icons.Default.AddCircle,
                         text = "Add New Customer",
                         onClick = {
                             showAddCustomerDialog = true
@@ -180,7 +181,7 @@ fun HomeScreenUI(component: HomeScreenComponent, db: FirebaseFirestore) {
                     Divider(color = Color.Gray, thickness = 1.dp)
 
                         DrawerItem(
-                            icon = Icons.Default.Info,
+                            icon = Icons.AutoMirrored.Filled.List,
                             text = "Credit List",
                             onClick = {
                                 component.onEvent(HomeScreenEvent.onCreditListClick)
@@ -189,7 +190,7 @@ fun HomeScreenUI(component: HomeScreenComponent, db: FirebaseFirestore) {
                         Divider(color = Color.Gray, thickness = 1.dp)
 
                         DrawerItem(
-                            icon = Icons.Default.List,
+                            icon = Icons.AutoMirrored.Filled.List,
                             text = "Issued List",
                             onClick = {
                                 component.onEvent(HomeScreenEvent.onCurrentlyIssuedClick(cylinderDetailsList))
